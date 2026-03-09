@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Module — Landing Page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #2E8E78;
+    font-family: 'Crimson Text', Georgia, serif;
+    padding: 60px 40px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    transition: background-color 0.35s ease;
+    overflow-x: hidden;
+  }
+
+  html {
+    transition: filter 0.35s ease;
+  }
+
+  html.is-grayscale {
+    filter: grayscale(1);
+  }
+
+  /* ─────────────────────────────────────────
+     PALETTE
+     #CA6107  burnt-orange   → title shadow color
+     #ECA610  golden-yellow  → labels
+     #F58220  vivid-orange   → hovered titles / links
+     #2E8E78  teal           → surface bg / dividers / border
+  ───────────────────────────────────────── */
+    :root {
+    --module-bg:           #9b2828;
+    --module-surface:      #42856c;
+    --module-text:         #f0ebe0;
+    --module-muted:        #8fa49f;
+    --module-border:       rgba(46,142,120,0.2);
+    --module-corner:       #CA6107;
+    --module-label:        #ECA610;
+    --module-accent:       #F58220;
+    --module-divider:      #2E8E78;
+    --module-link:         #F58220;
+    --module-link-hover:   #ECA610;
+
+    /* text-shadow: long staircase 45?? bottom-right */
+    --ts-rest:
+      1px 1px 0 rgba(202,97,7,0),
+      2px 2px 0 rgba(202,97,7,0);
+    --ts-hover:
+      1px  1px 0 #CA6107,
+      2px  2px 0 #CA6107,
+      3px  3px 0 #b85606,
+      4px  4px 0 #b05206,
+      5px  5px 0 #a84e05,
+      6px  6px 0 #a04905,
+      7px  7px 0 #974504,
+      8px  8px 0 #8e4004,
+      9px  9px 0 #853c03,
+      10px 10px 0 #7c3703,
+      11px 11px 0 #723302,
+      12px 12px 0 #692e02,
+      13px 13px 0 #5f2a01,
+      14px 14px 0 #562501,
+      16px 16px 0 #4c2100,
+      18px 16px 2px rgba(46,142,120,0.25),
+      20px 16px 1px rgba(0,0,0,0.5);
+
+    /* box-shadow: deep angled bottom-right */
+    --module-shadow-rest:  4px 4px 18px rgba(0,0,0,0.65);
+    --module-shadow-hover: 30px 30px 60px rgba(202,97,7,0.3),
+                           14px 14px 30px rgba(0,0,0,0.7);
+    --sub-shadow-rest:     3px 3px 12px rgba(0,0,0,0.58);
+    --sub-shadow-hover:    24px 24px 48px rgba(202,97,7,0.28),
+                           10px 10px 22px rgba(0,0,0,0.65);
+
+    --pad-module: 48px;
+    --pad-sub:    26px;
+    --gap:        18px;
+    --module-left-margin: 320px;
+    --newsletter-width: 220px;
+    --anim:       0.08s cubic-bezier(0.22, 0.68, 0, 1.15);
+  }
+
+  /* ─── OUTER MODULE ─────────────────────── */
+  .module {
+    position: relative;
+    z-index: 2;
+    overflow: visible;
+    background: var(--module-bg);
+    border: 1px solid var(--module-border);
+    border-radius: 0;
+    padding: var(--pad-module);
+    box-shadow: var(--module-shadow-rest);
+    transition: box-shadow var(--anim), transform var(--anim), margin-left 0.2s ease;
+    min-width: 320px;
+    margin-left: var(--module-left-margin);
+  }
+
+  .module:hover {
+    box-shadow: var(--module-shadow-hover);
+    transform: translate(-3px, -3px);
+  }
+
+  body.margin-reset {
+    --module-left-margin: 0px;
+  }
+
+  /* ── STICKY NEWSLETTER SIDEBAR ── */
+  #sticky-newsletter {
+    position: fixed;
+    top: 60px;
+    left: 40px;
+    width: var(--module-left-margin);
+    height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 12px;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* individual newsletter panels inside the sidebar */
+  .newsletter-panel {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 12px;
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.38s ease, transform 0.38s ease;
+    pointer-events: none;
+  }
+
+  .newsletter-panel.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .newsletter-panel.is-exit {
+    opacity: 0;
+    transform: translateY(-18px);
+    transition: opacity 0.28s ease, transform 0.28s ease;
+  }
+
+  /* keep the original hidden - panels are now in #sticky-newsletter */
+  .module__newsletter {
+    display: none;
+  }
+
+  .newsletter__text {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.1rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--module-text);
+    font-weight: 600;
+    display: block;
+    width: var(--newsletter-width);
+  }
+
+  .module__newsletter ul,
+  .newsletter-panel ul {
+    list-style: none;
+    padding: 0 18px 0 0;
+    margin: 18px 0 0;
+    font-size: 0.7rem;
+    line-height: 1.65;
+    color: var(--module-text);
+    opacity: 0.88;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: var(--newsletter-width);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+  }
+
+  .module__newsletter ul li {
+    letter-spacing: 0.03em;
+  }
+
+  .newsletter-panel ul li {
+    letter-spacing: 0.03em;
+  }
+
+  /* newsletter panel transitions handled via .is-visible / .is-exit classes */
+
+  /* module0..module3: override these variables to make modules independent */
+  .module0 {
+    --module-bg: #CA6107;
+    --module-surface: #CC8D67;
+    --module-text: #f0ebe0;
+    --module-muted: #f0ebe0;
+    --module-border: rgba(202,97,7, 0.3);
+    --module-corner: #7dc90b;
+    --module-label: #f0ebe0;
+    --module-accent: #F58220;
+    --module-divider: #1E1E1E;
+    --module-link: #CA6107;
+    --module-link-hover: #CA6107;
+    --module-shadow-rest: 4px 4px 0px rgba(100, 76, 49, 0.65);
+    --module-shadow-hover: 30px 30px 6px rgba(158,100,56,0.3),
+                           14px 14px 3px rgba(111,59,9,0.7);
+    --sub-shadow-rest: 3px 3px 5px rgb(111,59,9, 0.6);
+    --sub-shadow-hover: 24px 24px 10px rgba(158,100,56,0.28),
+                        10px 10px 5px rgb(111,59,9, 0.65);
+  }
+
+  .module1 {
+    --module-bg: #DB820C;
+    --module-surface: #DDAE6C;
+    --module-text: #f0ebe0;
+    --module-muted: #f0ebe0;
+    --module-border: rgba(219,130,12,0.28);
+    --module-corner: #2b6e9e;
+    --module-label: #f0ebe0;
+    --module-accent: #E59515;
+    --module-divider: #1E1E1E;
+    --module-link: #DB820C;
+    --module-link-hover: #DB820C;
+    --module-shadow-rest: 4px 4px 8px rgba(185, 122, 28, 0.75);
+    --module-shadow-hover: 30px 30px 6px rgba(255,102,0,0.22),
+                           14px 14px 3px rgba(116,62,20,0.7);
+    --sub-shadow-rest: 3px 3px 6px rgba(116,62,20,0.6);
+    --sub-shadow-hover: 24px 24px 12px rgba(255,102,0,0.2),
+                        10px 10px 6px rgba(116,62,20,0.65);
+  }
+
+  .module2 {
+    --module-bg: #F58220;
+    --module-surface: #F7AE80;
+    --module-text: #f0ebe0;
+    --module-muted: #f0ebe0;
+    --module-border: rgba(245,130,32,0.32);
+    --module-corner: #b44a7a;
+    --module-label: #f0ebe0;
+    --module-accent: #FC932E;
+    --module-divider: #1E1E1E;
+    --module-link: #F58220;
+    --module-link-hover: #F58220;
+    --module-shadow-rest: 4px 4px 8px rgba(157,71,17,0.75);
+    --module-shadow-hover: 30px 30px 6px rgba(219,47,12,0.22),
+                           14px 14px 3px rgba(157,71,17,0.7);
+    --sub-shadow-rest: 3px 3px 6px rgba(157,71,17,0.6);
+    --sub-shadow-hover: 24px 24px 12px rgba(219,47,12,0.2),
+                        10px 10px 6px rgba(157,71,17,0.65);
+  }
+
+  .module3 {
+    --module-bg: #2E8E78;
+    --module-surface: #89CDAB ;
+    --module-text: #f0ebe0;
+    --module-muted: #f0ebe0;
+    --module-border: rgba(109,149,91,0.3);
+    --module-corner: #6d8c3a;
+    --module-label: #f0ebe0;
+    --module-accent: #6ADD94;
+    --module-divider: #7fa45a;
+    --module-link: #628436;
+    --module-link-hover: #d5f29e;
+    --module-shadow-rest: 4px 4px 8px rgba(0,83,70,0.75);
+    --module-shadow-hover: 30px 30px 6px rgba(25,123,88,0.22),
+                           14px 14px 3px rgba(0,83,70,0.7);
+    --sub-shadow-rest: 3px 3px 6px rgba(0,83,70,0.6);
+    --sub-shadow-hover: 24px 24px 12px rgba(25,123,88,0.2),
+                        10px 10px 6px rgba(0,83,70,0.65);
+    /* module3-only hover shadow for titles */
+    --ts-hover:
+      1px  1px 0 #60CE87,
+      2px  2px 0 #57BE79,
+      3px  3px 0 #4DAF6C,
+      4px  4px 0 #439F5E,
+      5px  5px 0 #3A9051,
+      6px  6px 0 #308043,
+      7px  7px 0 #235D3F,
+      8px  8px 0 #1A463C,
+      9px  9px 0 #112F39,
+      10px 10px 0 #0D2337,
+      11px 11px 0 #09211A,
+      12px 12px 0 #04100D,
+      13px 13px 0 #071211,
+      14px 14px 0 #050c0b,
+      16px 16px 0 #030706,
+      18px 16px 2px rgba(46,142,120,0.25),
+      20px 16px 1px rgba(0,0,0,0.5);
+  }
+
+
+
+  /* corner notch */
+  .module__corner {
+    position: absolute;
+    top: 0; right: 0;
+    width: 0; height: 0;
+    border-style: solid;
+    border-width: 0 58px 58px 0;
+    border-color: transparent var(--module-corner) transparent transparent;
+    opacity: 0.75;
+  }
+
+  /* ─── MODULE HEADER ────────────────────── */
+  .module__header {
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .module__controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--module-label);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .toggle input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .toggle__track {
+    width: 46px;
+    height: 24px;
+    border-radius: 999px;
+    border: 1px solid var(--module-border);
+    background: rgba(0,0,0,0.2);
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    transition: background var(--anim), border-color var(--anim), box-shadow var(--anim);
+  }
+
+  .toggle__thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--module-text);
+    transform: translateX(0);
+    transition: transform var(--anim), background var(--anim);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  }
+
+  .toggle input:checked + .toggle__track {
+    background: var(--module-corner);
+    border-color: var(--module-corner);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);
+  }
+
+  .toggle input:checked + .toggle__track .toggle__thumb {
+    transform: translateX(20px);
+    background: #fff;
+  }
+
+  .toggle input:focus-visible + .toggle__track {
+    outline: 2px solid var(--module-link-hover);
+    outline-offset: 2px;
+  }
+
+  /* teal gradient rule below header */
+  .module__header::after {
+    content: '';
+    display: block;
+    height: 2px;
+    background: linear-gradient(to right, var(--module-divider), var(--module-corner), transparent);
+    opacity: 0.45;
+    border-radius: 2px;
+  }
+
+  .module__label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--module-label);
+  }
+
+  .module__title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.5rem, 7vw, 6.5rem);
+    letter-spacing: 0.04em;
+    line-height: 0.92;
+    color: var(--module-text);
+    text-shadow: var(--ts-rest);
+    transition: text-shadow var(--anim), color var(--anim);
+  }
+
+  /* title shadow + color shift on parent hover */
+  .module:hover .module__title {
+    text-shadow: var(--ts-hover);
+    color: var(--module-accent);
+  }
+
+  .module0__title-wrap {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    width: min(62ch, 100%);
+  }
+
+  .module0__title-blob {
+    flex: 0 0 clamp(92px, 11vw, 160px);
+    width: clamp(92px, 11vw, 160px);
+    aspect-ratio: 1 / 1;
+    clip-path: url(#aboutBlob);
+    background: linear-gradient(145deg, #7dc90b 0%, #f0ebe0 72%);
+    filter: drop-shadow(3px 3px 0 rgba(0,0,0,0.28));
+    opacity: 0.95;
+    align-self: flex-start;
+  }
+
+  .module__description {
+    font-size: 1.05rem;
+    line-height: 1.25;
+    color: var(--module-muted);
+    max-width: 58ch;
+    font-style: italic;
+  }
+
+  /* ─── MODULE BODY ──────────────────────── */
+  .module__body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap);
+  }
+
+  /* ─── SUBSECTION CARDS ─────────────────── */
+  .subsection {
+    flex: 1 1 calc(33.333% - var(--gap) * 2);
+    min-width: 200px;
+    background: var(--module-surface);
+    border-radius: 30px 20px 20px 30px;
+    border: 1px solid var(--module-border);
+    padding: var(--pad-sub);
+    box-shadow: var(--sub-shadow-rest);
+    transition: box-shadow var(--anim), transform var(--anim);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .subsection:hover {
+    box-shadow: var(--sub-shadow-hover);
+    transform: translate(-3px, -3px);
+  }
+
+  .subsection__label {
+    font-family: 'DM Mono', monospace;
+    font-size: .6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--module-label);
+  }
+
+  .subsection__title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.4rem, 2.6vw, 2rem);
+    letter-spacing: 0.03em;
+    line-height: 1;
+    color: var(--module-text);
+    text-shadow: var(--ts-rest);
+    transition: text-shadow var(--anim), color var(--anim);
+  }
+
+  /* each subsection handles its own hover independently */
+  .subsection:hover .subsection__title {
+    text-shadow: var(--ts-hover);
+    color: var(--module-accent);
+  }
+
+  .subsection__divider {
+    height: 1px;
+    background: linear-gradient(to right, var(--module-divider), transparent);
+    opacity: 0.4;
+    flex-shrink: 0;
+  }
+
+  .subsection__description {
+    font-size: 0.9rem;
+    line-height: 1.72;
+    color: var(--module-muted);
+    flex: 1;
+    font-style: italic;
+  }
+
+  /* links — bottom-right pinned */
+  .subsection__links {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 18px;
+    margin-top: 100px;
+  }
+
+  .subsection__links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--module-link);
+    text-decoration: none;
+    border-bottom: 1px solid var(--module-link);
+    padding-bottom: 1px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .subsection__links a:hover {
+    color: var(--module-link-hover);
+    border-color: var(--module-link-hover);
+  }
+
+  /* ─── RESPONSIVE ───────────────────────── */
+  @media (max-width: 640px) {
+    body { padding: 20px 14px; }
+    :root { --pad-module: 26px; --pad-sub: 20px; }
+    .subsection { flex: 1 1 100%; }
+    .module0__title-wrap { flex-direction: column; align-items: flex-start; }
+    .module0__title-blob { width: 88px; flex-basis: 88px; }
+  }
+
+  /* ─── NEWSLETTER DATE ENTRIES ───────────── */
+  .newsletter__date {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    opacity: 0.6;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .newsletter-panel ul li,
+  .module__newsletter ul li {
+    border-top: 1px solid rgba(240,235,224,0.1);
+    padding-top: 6px;
+  }
+
+  .newsletter-panel ul li:first-child,
+  .module__newsletter ul li:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  /* ─── MODULE 3 NEWSLETTER COLUMNS ── */
+  .subsection--newsletter {
+    flex: 1 1 calc(33.333% - var(--gap) * 2);
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* each date entry row inside a newsletter subsection */
+  .nl-entry {
+    border-top: 1px solid rgba(240,235,224,0.12);
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nl-entry:first-of-type {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .nl-entry__date {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    color: var(--module-label);
+    opacity: 0.75;
+  }
+
+  .nl-entry__summary {
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--module-muted);
+    font-style: italic;
+  }
+
+  .nl-entry__full {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--module-muted);
+    font-style: italic;
+  }
+
+  .nl-entry.is-expanded .nl-entry__full {
+    max-height: 800px;
+  }
+
+  .nl-entry__full p + p {
+    margin-top: 6px;
+  }
+
+  .nl-toggle {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--module-link);
+    background: none;
+    border: none;
+    border-bottom: 1px solid currentColor;
+    padding: 0;
+    cursor: pointer;
+    align-self: flex-start;
+    margin-top: 4px;
+    transition: color 0.2s;
+  }
+
+  .nl-toggle:hover { color: var(--module-link-hover); }
+
+  /* divider between contact row and newsletter row */
+  .module__body--newsletter-row {
+    margin-top: 28px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(240,235,224,0.15);
+  }
+
+  .module__body-section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--module-label);
+    opacity: 0.7;
+    width: 100%;
+    margin-bottom: 4px;
+  }
+</style>
+</head>
+
+<body>
+
+<!-- ── STICKY NEWSLETTER SIDEBAR ── -->
+<div id="sticky-newsletter">
+  <!-- panels injected by JS from each .module__newsletter -->
+</div>
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <clipPath id="aboutBlob" clipPathUnits="objectBoundingBox">
+      <path d="
+        M 0.558984 0.034474
+        C 0.683904 0.068957 0.801382 0.130116 0.880404 0.228008
+        C 0.959318 0.325765 1.000000 0.460287 0.971271 0.642146
+        C 0.952040 0.763879 0.859310 0.862032 0.739589 0.921155
+        C 0.619978 0.980220 0.474014 1.000000 0.349315 0.965579
+        C 0.100446 0.896878 0.000000 0.558247 0.038641 0.313270
+        C 0.075924 0.173759 0.143606 0.086971 0.233034 0.043549
+        C 0.322581 0.000069 0.434095 0.000000 0.558984 0.034474
+        Z
+      "/>
+    </clipPath>
+  </defs>
+</svg>
+<div class="module module0">
+
+  <div class="module__corner"></div>
+  <div class="module__newsletter">
+    <span class="newsletter__text">About Me</span>
+    <ul>
+      <li>
+        <span class="newsletter__date">2026-03-08</span>
+        Portfolio goes live. This site is now public — Don't be shy, take a good look around!
+      </li>
+      <li>
+        <span class="newsletter__date">2026-03-01</span>
+        SDSS 2026 DataThon Winner!! I still could not believe it. Thanks you team 44 for working so hard! 
+      </li>
+      <li>
+        <span class = "newsletter__date">2026-02-28</span>
+        Completed two exams but still have a datathon on this weekend, Man I wanna sleep like there is no tomorrow...
+      </li>
+      <li>
+        <span class="newsletter__date">2025-11-12</span>
+        The website goes live under <a href="www.melonbx.ca">www.melonbx.ca</a>. It's still quite janky, there is a lot of format
+        inconsistencies when you zoom in expecially on mobile. So pls visit via laptop or pc thx, i will try to fix it next week.
+      </li>
+      <li>
+        <span class="newsletter__date">2025-09-12</span>
+        Famous last words ig, there are around 5 ish duplicates which is a headach to find and fix, but it's all fine...
+        writing this at 2:34am i guess it's technically the 13th rn.
+      </li>
+      <li>
+        <span class="newsletter__date">2025-09-11</span>
+        holy shit. I am finally done, 2874 photos and 2874 juices sampled. That comes to 958 usable trainable data. well given the data cleaning
+        goes well. 
+      </li>
+      <li>
+        <span class="newsletter__date">2025-09-03</span>
+        i have got roughly 0 days before school starts to finish sampling. 
+        I do not have enough time to get the desired 3000 samples of photos and juice samples, maybe if i push a bit more in the 
+        begining of the semester. 
+      <li>
+      <li>
+        <span class="newsletter__date">2025-09-01</span>
+        Wrapped up summer research at UofT. Four months of EEG data, Bayesian models, and a lot of MATLAB. Back to coursework.
+      </li>
+        <span class="newsletter__date">2025-08-30</span>
+        i have got roughly 4 days before school starts to finish sampling
+      </li>
+      <li>
+        <span class="newsletter__date">2025-08-10</span>
+        GOOD NEWS! so far there are three farms that agreed, Canam farm, chromczak farm, and the growers.
+        I just have to wait for their harvest season to be over so I can get all the data I want! Nice.
+      </li>
+      <li>
+        <span class="newsletter__date">2025-08-01</span>
+        I have no idea where I should get in contact with ontario farmers... I had being on dun and bradstreet scorlling all day,
+        and cold emailing/calling every melon farms. hopfully they return a responce back.
+      </li>
+      <li>
+        <span class="newsletter__date">2025-06-05</span>
+        Time wise, today is when in started the project FRUIT-MELON SWEETNESS TEST, have no idea what or where I should start
+        probabily start looking at some CNN structures on youtube. Edit: the offical name is out(MelonBx), Melon cause it's suppose 
+        to test the sweetness of a watermelon, the sweetness measurment of choice (Brix) shorten to BX. [2025-11-29]
+      </li>
+      <li>
+        <span class="newsletter__date">2025-06-01</span>
+        Started undergraduate research under Prof. Lijia Wang in the Department of Statistical Sciences.
+      </li>
+    </ul>
+  </div>
+
+  <!-- ── HEADER ─── -->
+  <div class="module__header">
+    <span class="module__label">Est. [2027] · [Toronto-ON]</span>
+    <div class="module__controls">
+      <label class="toggle">
+        <input type="checkbox" id="grayscale-toggle" />
+        <span class="toggle__track" aria-hidden="true">
+          <span class="toggle__thumb"></span>
+        </span>
+        <span class="toggle__label">Grayscale</span>
+      </label>
+    </div>
+    <div class="module0__title-wrap">
+      <h1 class="module__title"><strong>MEIHUAN SHEN</strong></h1>
+      <div class="module0__title-blob" aria-hidden="true"></div>
+    </div>
+    <p class="module__description">
+      IF you are new, Welcome!<br>
+      IF you are a return visitor, Welcome back!<br>
+      This is the protfolio of Michael shen, the content here is what is happened recently to me, and my progress on my projects. <br>
+      This also acts as a personal website meant for any hiring manager, please hire me I am ready to work -v-!
+    </p>
+  </div>
+
+  <!-- ── SUBSECTIONS ── -->
+  <div class="module__body">
+
+    <div class="subsection">
+      <span class="subsection__label">Background</span>
+      <h2 class="subsection__title">Who I Am</h2>
+      <div class="subsection__divider"></div>
+      <p class="subsection__description">
+        I am currely a third year student study in University of Toronto pursuing a degree in Applied statistics specialist with a math major.<br><br>
+        I really like playing with data and getting familiar with it, like how you get to know someone from a complete stranger to a person that you can call 
+        your friend. <br><br>I am also planning in pursing a further study in a statistic master, Where? I still not sure yet :\ <br>
+        Currently open to work, or collaboration.
+      </p>
+      <div class="subsection__links">
+        <a href="mailto:Ancientrainshen@gmail.com">Ancientrainshen@gmail.com</a>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <span class="subsection__label">Craft</span>
+      <h2 class="subsection__title">What I Do</h2>
+      <div class="subsection__divider"></div>
+      <p class="subsection__description">
+        <br>
+        I like working with data and when I tried out machine learning with nerual networks, language model. <br><br>I find that the more complexed models takes many of the
+        exciting aspects of raw data away, which I priorities over. Currently non-parametric curve fitting with kernal density estimation of pdfs, emperical estimation of cdfs,
+        doing statistic decision theory with bayes risk, or minmax risk is the most exciting part of my day. <br><br>I am currently reading on some non-convex optimization which hopfully leads 
+        to some work under the supervision of professor Mou. <br>
+        This protfolio is also a part of my interest as I began to love UX/UI design when doing my <a href="www.melonbx.ca">melonbx</a> project. 
+      </p>
+      <div class="subsection__links">
+        <a href="https://github.com/Ancientrains" target="_blank">GitHub</a>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <span class="subsection__label">Beyond the Work</span>
+      <h2 class="subsection__title">Outside Hours</h2>
+      <div class="subsection__divider"></div>
+      <p class="subsection__description">
+        <br>
+        I don't really label myself as an outdoors or indoors person, somedays I would go run a half marathon behind my house, and otherdays well. <br><br>
+        But I understand the benefits of being outdoors so I push myself to be, and try to get active at least twice per week. my go to is a 5km run or some volleyball. 
+        tbh, I couldn't remember the last time I played with someone.<br><br>
+        Here is my <a href="https://open.spotify.com/user/anuq5bj7mec8d2lx44zmcmku6?si=9772544ce59d4bf1">spotify page</a>, I am also into survival games, project zomboid, vintage story. etc<br>
+      </p>
+      <div class="subsection__links">
+        <a href="https://steamcommunity.com/profiles/76561198846204641/">Steam</a>
+      </div>
+    </div>
+
+  </div><!-- /.module__body -->
+</div><!-- /.module -->
+<div class="module module1">
+
+  <div class="module__corner"></div>
+  <div class="module__newsletter">
+    <span class="newsletter__text">Projects</span>
+    <ul>
+      <li>
+        <span class="newsletter__date">2026-03-01</span>
+        SDSS Datathon — Team 44 places 1st. 144× baseline improvement on shelter pressure prediction. Report delivered to stakeholders.
+      </li>
+      <li>
+        <span class="newsletter__date">2025-12-15</span>
+        MelonBX deployed to production. AWS EC2, Nginx, custom domain, SSL live. 2,000+ farm samples in the dataset.
+      </li>
+      <li>
+        <span class="newsletter__date">2025-05-10</span>
+        Country Predictor published — annotated walkthrough comparing OLS, gradient descent, and closed-form solutions side by side.
+      </li>
+      <li>
+        <span class="newsletter__date">2024-11-20</span>
+        Cancer Regression Model first commit. Multivariate regression on clinical data, full diagnostic pipeline included.
+      </li>
+    </ul>
+  </div>
+
+  <!-- ── HEADER ── -->
+  <div class="module__header">
+    <span class="module__label">4 Repositories · github.com/Ancientrains</span>
+    <h1 class="module__title"><strong>PROJECTS</strong></h1>
+    <p class="module__description">
+      A collection of ML systems, statistical analyses, and data-driven tools — spanning computer vision, regression modelling, and real-world competition submissions.
+    </p>
+  </div>
+
+  <!-- ── SUBSECTIONS ── -->
+  <div class="module__body">
+
+    <div class="subsection">
+      <span class="subsection__label">Python · PyTorch · AWS · Flask</span>
+      <h2 class="subsection__title">MelonBX</h2>
+      <div class="subsection__divider"></div>
+      <p class="subsection__description">
+        A deployed production ML API that predicts watermelon sweetness (Brix) from images. Built a multi-branch Siamese CNN achieving ~80% reduction in both RMSE and MAE. Collected 2,000+ ground-truth samples from Ontario farms, deployed on AWS EC2 with custom domain, automated SSL/TLS, CI/CD pipeline, and S3 persistence via IAM Instance Roles.
+      </p>
+      <div class="subsection__links">
+        <a href="https://github.com/Ancientrains/FRUIT-MELONBX" target="_blank">GitHub</a>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <span class="subsection__label">Jupyter Notebook · scikit-learn · 1st Place</span>
+      <h2 class="subsection__title">SDSS Datathon</h2>
+      <div class="subsection__divider"></div>
+      <p class="subsection__description">
+        1st Place winner at the SDSS UofT Datathon 2026. Built a predictive pipeline for Toronto shelter capacity pressure using HistGradientBoostingRegressor on a 2-year dataset. Achieved a 144× improvement over baseline MAE. Produced geospatial heatmaps of the GTA and delivered stakeholder-facing recommendations for evidence-based resource allocation.
+      </p>
+      <div class="subsection__links">
+        <a href="https://github.com/Ancientrains/sdss-Datathon-team44" target="_blank">GitHub</a>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <span class="subsection__label">R · Statistical Modelling</span>
+      <h2 class="subsection__title">Cancer Regression Model</h2>
+      <div class="subsection__divider"></div>
+      <p class="subsection__description">
+        A regression analysis applying multivariate statistical methods to cancer-related data. Explores model selection, diagnostic checks, and interpretation of results — documenting the full analytical process from data cleaning through to validated predictions.
+      </p>
+      <div class="subsection__links">
+        <a href="https://github.com/Ancientrains/Cancer-regression-model" target="_blank">GitHub</a>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <span class="subsection__label">Python · Linear Regression</span>
+      <h2 class="subsection__title">Country Predictor</h2>
+      <div class="subsection__divider"></div>
+      <p class="subsection__description">
+        A single-file annotated notebook comparing three approaches to fitting linear regression — documenting the mathematical derivations, implementation differences, and performance trade-offs between OLS, gradient descent, and a third method side by side.
+      </p>
+      <div class="subsection__links">
+        <a href="https://github.com/Ancientrains/Country-predictor" target="_blank">GitHub</a>
+      </div>
+    </div>
+
+  </div><!-- /.module__body -->
+</div><!-- /.module -->
+<div class="module module2">
+
+  <div class="module__corner"></div>
+  <div class="module__newsletter">
+    <span class="newsletter__text">Experience</span>
+    <ul>
+      <li>
+        <span class="newsletter__date">2026-03-01</span>
+        1st Place — SDSS UofT Datathon 2026. 48 hours, one team, one winning model.
+      </li>
+      <li>
+        <span class="newsletter__date">2025-09-01</span>
+        Research term ends. Processed 50 GB+ EEG data; models validated via cross-validation and Box-Cox transformation.
+      </li>
+      <li>
+        <span class="newsletter__date">2025-06-01</span>
+        Joined Prof. Lijia Wang's lab as Undergraduate Researcher. Focus: Bayesian hierarchical modelling on neural time-series.
+      </li>
+      <li>
+        <span class="newsletter__date">2023-09-01</span>
+        Enrolled at the University of Toronto, Specialist in Applied Statistical Science + Major in Mathematics.
+      </li>
+    </ul>
+  </div>
+
+  <!-- Header -->
+  <div class="module__header">
+    <span class="module__label">University of Toronto · Toronto, ON</span>
+    <h1 class="module__title"><strong>EXPERIENCE</strong></h1>
+    <p class="module__description">
+      Research and competition experience applying statistical modelling, machine learning, and data engineering to real-world problems in healthcare, social services, and agriculture.
+    </p>
+  </div>
+
+  <!-- Subsections -->
+  <div class="module__body">
+
+    <div class="subsection">
+      <span class="subsection__label">March 2025 · 48-Hour Competition · 1st Place</span>
+      <h2 class="subsection__title">SDSS Datathon 2026</h2>
+      <div class="subsection__divider"></div>
+      <p class="subsection__description">
+        Team 44 — Model Builder & Data Visualization. Built a predictive pipeline for Toronto shelter capacity pressure using HistGradientBoostingRegressor; engineered occupancy-free features to prevent target leakage, one-hot encoded 6 categorical dimensions, and validated via 80/20 temporal split. Achieved 144× improvement over baseline MAE. Identified location as the primary pressure driver and presented findings via a GTA heatmap to stakeholders.
+      </p>
+      <div class="subsection__links">
+        <a href="https://github.com/Ancientrains/sdss-Datathon-team44" target="_blank">GitHub</a>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <span class="subsection__label">June 2025 – September 2025 · UofT Statistical Sciences</span>
+      <h2 class="subsection__title">Undergraduate Researcher</h2>
+      <div class="subsection__divider"></div>
+      <p class="subsection__description">
+        Under Prof. Lijia Wang. Applied Bayesian hierarchical modelling and multivariate regression to neural time-series data to quantify consciousness recovery indicators in comatose patients. Validated models via cross-validation, residual analysis, and Box-Cox transformations. Processed 50 GB+ EEG datasets using parallel computing pipelines in Python, R, and MATLAB.
+      </p>
+      <div class="subsection__links">
+        <a href="mailto:Ancientrainshen@gmail.com">Ancientrainshen@gmail.com</a>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <span class="subsection__label">Expected June 2027 · Major CGPA 3.6/4.0</span>
+      <h2 class="subsection__title">B.Sc. UofT</h2>
+      <div class="subsection__divider"></div>
+      <p class="subsection__description">
+        Specialist in Applied Statistical Science, Major in Mathematics. Art and Science Internship Program (Co-op). Coursework in Methods of Data Analysis, Theory of Statistical Practice, Data Structures, and Machine Learning. Competencies in Bayesian methods, GLMs, CNNs, gradient boosting, AWS data engineering, and REST API development.
+      </p>
+      <div class="subsection__links">
+        <a href="https://github.com/Ancientrains" target="_blank">GitHub</a>
+      </div>
+    </div>
+
+  </div><!-- /.module__body -->
+</div><!-- /.module -->
+
+<div class="module module3">
+
+  <div class="module__corner"></div>
+  <div class="module__newsletter">
+    <span class="newsletter__text">Contact</span>
+  </div>
+
+  <!-- Header -->
+  <div class="module__header">
+    <span class="module__label">Toronto, ON · Open to opportunities</span>
+    <h1 class="module__title"><strong>CONTACT / NEWSLETTER</strong></h1>
+    <p class="module__description">
+      Want to collaborate, ask a question, or just say hello? Reach out — always happy to connect. Below is a running log of updates, sorted newest first.
+    </p>
+  </div>
+
+  <!-- Row 1: Contact cards -->
+  <div class="module__body">
+
+    <div class="subsection">
+      <span class="subsection__label">Email</span>
+      <h2 class="subsection__title">Get In Touch</h2>
+      <div class="subsection__divider"></div>
+      <p class="subsection__description">
+        The best way to reach me. I typically respond within a day or two.
+      </p>
+      <div class="subsection__links">
+        <a href="mailto:Ancientrainshen@gmail.com">Ancientrainshen@gmail.com</a>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <span class="subsection__label">Code</span>
+      <h2 class="subsection__title">GitHub</h2>
+      <div class="subsection__divider"></div>
+      <p class="subsection__description">
+        All my public projects, experiments, and competition submissions live here.
+      </p>
+      <div class="subsection__links">
+        <a href="https://github.com/Ancientrains" target="_blank">github.com/Ancientrains</a>
+      </div>
+    </div>
+
+  </div><!-- /.module__body row 1 -->
+
+  <!-- Row 2: Newsletter — 3 columns, one per module, entries collapsible -->
+  <div class="module__body module__body--newsletter-row">
+
+    <span class="module__body-section-label">Newsletter · Sorted Newest First</span>
+
+    <!-- ── About Me ── -->
+    <div class="subsection subsection--newsletter">
+      <span class="subsection__label">About Me</span>
+      <div class="subsection__divider"></div>
+
+      <div class="nl-entry">
+        <span class="nl-entry__date">2026-03-06</span>
+        <p class="nl-entry__summary">Portfolio goes live. This site is now public — a living document of work, research, and ideas.</p>
+        <div class="nl-entry__full">
+          <p>The site covers three core areas: an About section (template for you to fill), a Projects section drawing from GitHub, and an Experience section from research and competition history at the University of Toronto.</p>
+          <p>Built entirely in HTML/CSS/JS. The sticky newsletter sidebar was one of the more interesting interaction challenges — position-fixed, data-driven, switching content as you scroll.</p>
+          <p>Expect updates as new projects ship. Next milestone: a deployed version with a real domain.</p>
+        </div>
+        <button class="nl-toggle" onclick="toggleEntry(this)">↓ more</button>
+      </div>
+
+      <div class="nl-entry">
+        <span class="nl-entry__date">2025-09-01</span>
+        <p class="nl-entry__summary">Wrapped up summer research at UofT. Back to coursework.</p>
+        <div class="nl-entry__full">
+          <p>Four months of EEG data, Bayesian hierarchical models, and a lot of MATLAB. Research under Prof. Lijia Wang in Statistical Sciences concludes. Models validated, datasets archived, report written.</p>
+        </div>
+        <button class="nl-toggle" onclick="toggleEntry(this)">↓ more</button>
+      </div>
+
+      <div class="nl-entry">
+        <span class="nl-entry__date">2025-06-01</span>
+        <p class="nl-entry__summary">Started undergraduate research under Prof. Lijia Wang, Department of Statistical Sciences.</p>
+        <div class="nl-entry__full">
+          <p>Project focus: applying Bayesian hierarchical modelling and multivariate regression to neural time-series data to quantify consciousness recovery indicators in comatose patients. Beginning data pipeline setup across Python, R, and MATLAB.</p>
+        </div>
+        <button class="nl-toggle" onclick="toggleEntry(this)">↓ more</button>
+      </div>
+
+    </div><!-- /About Me -->
+
+    <!-- ── Projects ── -->
+    <div class="subsection subsection--newsletter">
+      <span class="subsection__label">Projects</span>
+      <div class="subsection__divider"></div>
+
+      <div class="nl-entry">
+        <span class="nl-entry__date">2026-03-01</span>
+        <p class="nl-entry__summary">SDSS Datathon — Team 44 places 1st. 144× baseline improvement on Toronto shelter pressure prediction.</p>
+        <div class="nl-entry__full">
+          <p>Brief: forecast Toronto shelter capacity pressure. Built a HistGradientBoostingRegressor pipeline on a 2-year dataset. Engineered occupancy-free features to prevent target leakage, one-hot encoded 6 categorical dimensions, validated via 80/20 temporal split.</p>
+          <p>Result: 144× improvement over baseline MAE, RMSE of 7.08 × 10⁻⁴ on logit-transformed scores. Location identified as primary pressure driver. GTA geospatial heatmap and stakeholder report delivered.</p>
+        </div>
+        <button class="nl-toggle" onclick="toggleEntry(this)">↓ more</button>
+      </div>
+
+      <div class="nl-entry">
+        <span class="nl-entry__date">2025-12-15</span>
+        <p class="nl-entry__summary">MelonBX deployed to production — Siamese CNN predicting watermelon sweetness from images, live on AWS EC2.</p>
+        <div class="nl-entry__full">
+          <p>Multi-branch Siamese CNN (PyTorch) achieving ~80% reduction in RMSE and MAE vs. baseline. Dataset: 2,000+ samples from Ontario farms, each with a ground-truth Brix refractometer reading.</p>
+          <p>Infrastructure: AWS EC2/Nginx/Gunicorn, custom domain, Certbot SSL, CI/CD pipeline, S3 persistence via IAM Instance Roles. Frontend prototyped in Figma, built in HTML/CSS/JS.</p>
+        </div>
+        <button class="nl-toggle" onclick="toggleEntry(this)">↓ more</button>
+      </div>
+
+      <div class="nl-entry">
+        <span class="nl-entry__date">2025-05-10</span>
+        <p class="nl-entry__summary">Country Predictor published — annotated comparison of OLS, gradient descent, and closed-form linear regression.</p>
+        <div class="nl-entry__full">
+          <p>Single-file notebook implementing all three approaches from scratch with mathematical derivations alongside the code. Compares convergence behaviour, computational cost, and numerical stability. A reference for understanding what sits underneath sklearn.</p>
+        </div>
+        <button class="nl-toggle" onclick="toggleEntry(this)">↓ more</button>
+      </div>
+
+      <div class="nl-entry">
+        <span class="nl-entry__date">2024-11-20</span>
+        <p class="nl-entry__summary">Cancer Regression Model first commit — multivariate regression on clinical data with full diagnostic pipeline.</p>
+        <div class="nl-entry__full">
+          <p>Full workflow: variable selection, collinearity checks, residual vs. fitted plots, Q-Q plots, Cook's distance, VIFs, AIC/BIC stepwise selection, and cross-validation. Written in R; serves as a reference implementation for clinical observational data analysis.</p>
+        </div>
+        <button class="nl-toggle" onclick="toggleEntry(this)">↓ more</button>
+      </div>
+
+    </div><!-- /Projects -->
+
+    <!-- ── Experience ── -->
+    <div class="subsection subsection--newsletter">
+      <span class="subsection__label">Experience</span>
+      <div class="subsection__divider"></div>
+
+      <div class="nl-entry">
+        <span class="nl-entry__date">2026-03-01</span>
+        <p class="nl-entry__summary">1st Place — SDSS UofT Datathon 2026. 48 hours, one team, one winning model.</p>
+        <div class="nl-entry__full">
+          <p>Team 44. Role: Model Builder & Data Visualization. Competed against teams from across the university in a 48-hour sprint. Final submission included the model, a technical report, and stakeholder-facing recommendations with geospatial visualisations.</p>
+        </div>
+        <button class="nl-toggle" onclick="toggleEntry(this)">↓ more</button>
+      </div>
+
+      <div class="nl-entry">
+        <span class="nl-entry__date">2025-09-01</span>
+        <p class="nl-entry__summary">Research term ends. 50 GB+ EEG data processed; Bayesian models validated via cross-validation and Box-Cox.</p>
+        <div class="nl-entry__full">
+          <p>Summer 2025, Statistical Sciences, Prof. Lijia Wang. Applied Bayesian hierarchical modelling and multivariate regression to neural time-series for quantifying consciousness recovery in comatose patients. Diagnostics: cross-validation, residual analysis, Box-Cox transformations for heteroscedasticity. Parallel pipelines in Python, R, MATLAB.</p>
+        </div>
+        <button class="nl-toggle" onclick="toggleEntry(this)">↓ more</button>
+      </div>
+
+      <div class="nl-entry">
+        <span class="nl-entry__date">2025-06-01</span>
+        <p class="nl-entry__summary">Joined Prof. Lijia Wang's lab as Undergraduate Researcher. Focus: Bayesian modelling on neural time-series.</p>
+        <div class="nl-entry__full">
+          <p>Start of four-month research appointment in the Department of Statistical Sciences at the University of Toronto. Beginning EEG data pipeline setup and initial model specification under Prof. Wang's supervision.</p>
+        </div>
+        <button class="nl-toggle" onclick="toggleEntry(this)">↓ more</button>
+      </div>
+
+      <div class="nl-entry">
+        <span class="nl-entry__date">2023-09-01</span>
+        <p class="nl-entry__summary">Enrolled at University of Toronto — Specialist in Applied Statistical Science, Major in Mathematics.</p>
+        <div class="nl-entry__full">
+          <p>Art and Science Internship Program (Co-op). Began coursework in statistical methods, data structures, and mathematics. Current Major CGPA: 3.6/4.0. Expected graduation: June 2027.</p>
+        </div>
+        <button class="nl-toggle" onclick="toggleEntry(this)">↓ more</button>
+      </div>
+
+    </div><!-- /Experience -->
+
+  </div><!-- /.module__body row 2 -->
+
+</div><!-- /.module -->
+
+<script>
+  function toggleEntry(btn) {
+    const entry = btn.closest('.nl-entry');
+    if (!entry) return;
+    entry.classList.toggle('is-expanded');
+    btn.textContent = entry.classList.contains('is-expanded') ? '↑ less' : '↓ more';
+  }
+
+  (() => {
+    const body = document.body;
+    const root = document.documentElement;
+    const modules = Array.from(document.querySelectorAll('.module'));
+    const stickyEl = document.getElementById('sticky-newsletter');
+    const grayscaleToggle = document.getElementById('grayscale-toggle');
+    const grayscaleKey = 'mw_grayscale';
+
+    if (grayscaleToggle) {
+      try {
+        const saved = localStorage.getItem(grayscaleKey);
+        if (saved === '1') {
+          root.classList.add('is-grayscale');
+          grayscaleToggle.checked = true;
+        }
+      } catch (err) {
+        /* ignore storage errors */
+      }
+
+      grayscaleToggle.addEventListener('change', () => {
+        root.classList.toggle('is-grayscale', grayscaleToggle.checked);
+        try {
+          localStorage.setItem(grayscaleKey, grayscaleToggle.checked ? '1' : '0');
+        } catch (err) {
+          /* ignore storage errors */
+        }
+      });
+    }
+
+    /* ── 1. BUILD PANELS from each module's .module__newsletter ── */
+    const panels = [];
+    modules.forEach((mod, i) => {
+      const src = mod.querySelector('.module__newsletter');
+      if (!src) return;
+
+      const panel = document.createElement('div');
+      panel.className = 'newsletter-panel';
+      panel.dataset.moduleIndex = i;
+      // carry colour context via inline CSS var so text colours match the module
+      const bg = getComputedStyle(mod).getPropertyValue('--module-text').trim();
+      panel.style.setProperty('--module-text', bg || '#f0ebe0');
+      // clone inner content
+      panel.innerHTML = src.innerHTML;
+      stickyEl.appendChild(panel);
+      panels.push({ panel, mod });
+    });
+
+    function firstTwoSentences(text) {
+      const cleaned = text.replace(/\s+/g, ' ').trim();
+      if (!cleaned) return '';
+      const sentences = cleaned.match(/[^.!?]+[.!?]+(?:\s+|$)/g);
+      if (!sentences) return cleaned;
+      return sentences.slice(0, 2).join(' ').trim() || cleaned;
+    }
+
+    function syncLogSummaries() {
+      const summaryByKey = new Map();
+
+      modules.forEach(mod => {
+        const section = mod.querySelector('.module__newsletter');
+        if (!section) return;
+        const label = section.querySelector('.newsletter__text')?.textContent.trim();
+        if (!label) return;
+        section.querySelectorAll('li').forEach(li => {
+          const date = li.querySelector('.newsletter__date')?.textContent.trim();
+          if (!date) return;
+          const clone = li.cloneNode(true);
+          const dateEl = clone.querySelector('.newsletter__date');
+          if (dateEl) dateEl.remove();
+          const text = clone.textContent.replace(/\s+/g, ' ').trim();
+          if (!text) return;
+          summaryByKey.set(`${label}||${date}`, firstTwoSentences(text));
+        });
+      });
+
+      document.querySelectorAll('.module3 .subsection--newsletter').forEach(section => {
+        const label = section.querySelector('.subsection__label')?.textContent.trim();
+        if (!label) return;
+        section.querySelectorAll('.nl-entry').forEach(entry => {
+          const date = entry.querySelector('.nl-entry__date')?.textContent.trim();
+          const summaryEl = entry.querySelector('.nl-entry__summary');
+          if (!date || !summaryEl) return;
+          const key = `${label}||${date}`;
+          const summary = summaryByKey.get(key);
+          if (summary) summaryEl.textContent = summary;
+        });
+      });
+    }
+
+    syncLogSummaries();
+
+    /* ── 2. TRACK which module is currently in the viewport center ── */
+    let currentIndex = -1;
+
+    function showPanel(idx) {
+      if (idx === currentIndex) return;
+
+      // hide previous
+      if (currentIndex >= 0 && panels[currentIndex]) {
+        const prev = panels[currentIndex].panel;
+        prev.classList.remove('is-visible');
+        prev.classList.add('is-exit');
+        // clean up exit class after transition
+        prev.addEventListener('transitionend', () => prev.classList.remove('is-exit'), { once: true });
+      }
+
+      currentIndex = idx;
+
+      if (idx >= 0 && panels[idx]) {
+        const next = panels[idx].panel;
+        // match sidebar text colour to module's --module-text variable
+        const modStyles = getComputedStyle(panels[idx].mod);
+        const textCol = modStyles.getPropertyValue('--module-text').trim();
+        stickyEl.querySelectorAll('.newsletter__text, li').forEach(el => {
+          el.style.color = textCol || '#f0ebe0';
+        });
+        next.classList.remove('is-exit');
+        // tiny rAF so transition triggers
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => next.classList.add('is-visible'));
+        });
+      }
+    }
+
+    /* ── 3. INTERSECTION OBSERVER — fires when module hits viewport midpoint ── */
+    const observer = new IntersectionObserver((entries) => {
+      // find the most-intersecting module
+      let best = null;
+      let bestRatio = 0;
+      entries.forEach(entry => {
+        if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
+          bestRatio = entry.intersectionRatio;
+          best = entry.target;
+        }
+      });
+
+      // also always check full module list for whichever covers the most screen
+      const vpMid = window.innerHeight / 2;
+      let nearestMod = null;
+      let nearestDist = Infinity;
+      modules.forEach(mod => {
+        const rect = mod.getBoundingClientRect();
+        const modMid = (rect.top + rect.bottom) / 2;
+        const dist = Math.abs(modMid - vpMid);
+        if (dist < nearestDist && rect.bottom > 0 && rect.top < window.innerHeight) {
+          nearestDist = dist;
+          nearestMod = mod;
+        }
+      });
+
+      if (nearestMod) {
+        const idx = modules.indexOf(nearestMod);
+        // hide sidebar when on module3 (no left margin)
+        if (nearestMod.classList.contains('module3')) {
+          showPanel(-1);
+          stickyEl.style.opacity = '0';
+          stickyEl.style.pointerEvents = 'none';
+        } else {
+          stickyEl.style.opacity = '1';
+          stickyEl.style.pointerEvents = 'auto';
+          showPanel(idx);
+          // sync body background
+          const bg = getComputedStyle(nearestMod).getPropertyValue('--module-bg').trim();
+          if (bg) body.style.backgroundColor = bg;
+        }
+      }
+    }, {
+      threshold: Array.from({ length: 21 }, (_, i) => i * 0.05)
+    });
+
+    modules.forEach(mod => observer.observe(mod));
+
+    /* ── 4. ALSO update on scroll for smoothness ── */
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const vpMid = window.innerHeight / 2;
+        let nearestMod = null;
+        let nearestDist = Infinity;
+        modules.forEach(mod => {
+          const rect = mod.getBoundingClientRect();
+          const modMid = (rect.top + rect.bottom) / 2;
+          const dist = Math.abs(modMid - vpMid);
+          if (dist < nearestDist && rect.bottom > 80 && rect.top < window.innerHeight - 80) {
+            nearestDist = dist;
+            nearestMod = mod;
+          }
+        });
+
+        if (nearestMod) {
+          const idx = modules.indexOf(nearestMod);
+          const bg = getComputedStyle(nearestMod).getPropertyValue('--module-bg').trim();
+          if (bg) body.style.backgroundColor = bg;
+
+          if (nearestMod.classList.contains('module3')) {
+            showPanel(-1);
+            stickyEl.style.opacity = '0';
+            body.classList.add('margin-reset');
+          } else {
+            body.classList.remove('margin-reset');
+            stickyEl.style.opacity = '1';
+            showPanel(idx);
+          }
+        }
+        ticking = false;
+      });
+    }, { passive: true });
+
+    /* ── 5. Apply colour to each panel's text nodes to match module ── */
+    panels.forEach(({ panel, mod }) => {
+      const textCol = getComputedStyle(mod).getPropertyValue('--module-text').trim() || '#f0ebe0';
+      panel.querySelectorAll('.newsletter__text, li').forEach(el => {
+        el.style.color = textCol;
+      });
+    });
+
+    /* ── 6. Show first panel on load ── */
+    showPanel(0);
+  })();
+</script>
+
+</body>
+</html>
+
+
